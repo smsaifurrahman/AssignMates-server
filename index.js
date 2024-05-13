@@ -11,7 +11,11 @@ const port = process.env.PORT || 5000;
 
 //Middle ware
 const corsOptions = {
-   origin: ["http://localhost:5173", "https://assignmates-5c335.web.app", "https://assignmates-5c335.firebaseapp.com"],
+   origin: [
+      "http://localhost:5173",
+      "https://assignmates-5c335.web.app",
+      "https://assignmates-5c335.firebaseapp.com",
+   ],
    credentials: true,
    optionSuccessStatus: 200,
 };
@@ -22,14 +26,14 @@ app.use(cookieParser());
 // Verify JWT middleware
 const verifyToken = (req, res, next) => {
    const token = req.cookies?.token;
-   if(!token) return res.status(401).send({message: 'Unauthorized access'});
+   if (!token) return res.status(401).send({ message: "Unauthorized access" });
 
    if (token) {
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
          if (err) {
-             return res.status(401).send({message: 'Unauthorized access'});
+            return res.status(401).send({ message: "Unauthorized access" });
          }
-         console.log(decoded);
+         // console.log(decoded);
          req.user = decoded;
          next();
       });
@@ -42,9 +46,9 @@ const cookieOptions = {
    httpOnly: true,
    secure: process.env.NODE_ENV === "production",
    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
- };
- //localhost:5000 and localhost:5173 are treated as same site.  so sameSite value must be strict in development server.  in production sameSite will be none
- // in development server secure will false .  in production secure will be true
+};
+//localhost:5000 and localhost:5173 are treated as same site.  so sameSite value must be strict in development server.  in production sameSite will be none
+// in development server secure will false .  in production secure will be true
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fjovpu5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -70,19 +74,23 @@ async function run() {
 
       // JWT  API
       app.post("/jwt", async (req, res) => {
-         console.log('logging in');
+         console.log("logging in");
          const user = req.body;
          const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
             expiresIn: "2h",
          });
-         res.cookie("token", token,cookieOptions).send({ success: true });
+         res.cookie("token", token, cookieOptions).send({ success: true });
       });
 
       //clear token after logout
       app.get("/logout", async (req, res) => {
          // const user = req.body;
-         console.log('logging out');
-         res.clearCookie("token", {...cookieOptions, maxAge:0, expiresIn: new Date()}).send({ success: true });
+         // console.log('logging out');
+         res.clearCookie("token", {
+            ...cookieOptions,
+            maxAge: 0,
+            expiresIn: new Date(),
+         }).send({ success: true });
       });
 
       // create assignment
@@ -92,38 +100,19 @@ async function run() {
          res.send(result);
       });
 
-   //    app.get("/assignments", async (req, res) => {
-   //       const sortBy = req.query.sortBy;
-   //       console.log(sortBy);
-   //       try {
-   //           let filter = {};
-   //           if (sortBy === 'Easy') {
-   //               filter = { difficulty_level: 'Easy' };
-   //           } else if (sortBy === 'Medium') {
-   //               filter = { difficulty_level: 'Medium' };
-   //           } else if (sortBy === 'Hard') {
-   //               filter = { difficulty_level: 'Hard' };
-   //           }
-   //           const result = await assignmentsCollection.find(filter).toArray();
-   //           res.send(result);
-   //       } catch (err) {
-   //           console.log(err.message);
-   //           res.status(500).send('Internal Server Error');
-   //       }
-   //   });
-     
 
+// assignment
       app.get("/assignments", async (req, res) => {
          const query = req.query;
-         console.log(query);
-         if(query){
-            console.log('inside if');
+    
+         if(Object.keys(query).length > 0){
+        
             if(query.sortBy === 'Easy') {
                const filter = {difficulty_level: 'Easy' }
                const result = await assignmentsCollection.find(filter).toArray();
                res.send(result);
             } else if (query.sortBy === 'Medium'){
-               const {filter} = {difficulty_level: 'Medium' }
+               const filter = {difficulty_level: 'Medium' }
                const result = await assignmentsCollection.find(filter).toArray();
                res.send(result);
             } else if (query.sortBy === 'Hard'){
@@ -136,13 +125,11 @@ async function run() {
                res.send(result);
             }
          } else{
-            console.log('inside else');
+          
             const result = await assignmentsCollection.find().toArray();
             res.send(result);
          }
 
-
-        
       });
       // Get a single assignment
       app.get("/assignments/:id", async (req, res) => {
@@ -193,10 +180,11 @@ async function run() {
 
       // get submitted assignment list for a specific user
       app.get("/pending/:email", verifyToken, async (req, res) => {
-         const tokenEmail = req.user.email
+         const tokenEmail = req.user.email;
          const email = req.params.email;
-         if(tokenEmail!== email ) return res.status(403).send({message: 'Forbidden access'});
-         const query = { examineeMail: email};
+         if (tokenEmail !== email)
+            return res.status(403).send({ message: "Forbidden access" });
+         const query = { examineeMail: email };
          const result = await submittedCollection.find(query).toArray();
          res.send(result);
       });
