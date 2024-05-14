@@ -173,7 +173,7 @@ async function run() {
       // get all pending assignment
       app.get("/pending", verifyToken, async (req, res) => {
          const tokenData = req.user.email;
-         console.log( 'pending', tokenData);
+         // console.log( 'pending', tokenData);
          const filter = { status: "Pending" };
          const result = await submittedCollection.find(filter).toArray();
          res.send(result);
