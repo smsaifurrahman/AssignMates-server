@@ -104,6 +104,7 @@ async function run() {
 // assignment
       app.get("/assignments", async (req, res) => {
          const query = req.query;
+     
     
          if(Object.keys(query).length > 0){
         
@@ -171,9 +172,9 @@ async function run() {
 
       // get all pending assignment
       app.get("/pending", verifyToken, async (req, res) => {
-         // const tokenData = req.user.email;
+         const tokenData = req.user.email;
          // console.log( 'pending', tokenData);
-         const filter = { status: "pending" };
+         const filter = { status: "Pending" };
          const result = await submittedCollection.find(filter).toArray();
          res.send(result);
       });
