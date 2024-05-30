@@ -173,7 +173,7 @@ async function run() {
       // get all pending assignment
       app.get("/pending", verifyToken, async (req, res) => {
          const tokenData = req.user.email;
-         // console.log( 'pending', tokenData);
+         console.log( 'pending', tokenData);
          const filter = { status: "Pending" };
          const result = await submittedCollection.find(filter).toArray();
          res.send(result);
@@ -216,6 +216,58 @@ async function run() {
          );
          res.send();
       });
+
+      // get top assignment lists
+      app.get('/top-assignments', async(req,res)=> {
+         console.log('from top assignment');
+      //    const topAssignments = await submittedCollection.aggregate([
+      //       {
+      //           $group: {
+      //               _id: '$assignment_title',
+      //               count: { $sum: 1 }
+      //           }
+      //       },
+      //       { $sort: { count: -1 } },
+      //       { $limit: 3 }
+      //   ]).toArray(); 
+      //   res.send(topAssignments);
+      
+      const topAssignments = await submittedCollection.aggregate([
+         {
+             $group: {
+                 _id: '$assignment_title',
+                 count: { $sum: 1 }
+             }
+         },
+         { $sort: { count: -1 } },
+         { $limit: 3 },
+         {
+             $lookup: {
+                 from: 'assignments',
+                 localField: '_id',
+                 foreignField: 'assignment_title',
+                 as: 'assignmentDetails'
+             }
+         },
+         {
+             $unwind: '$assignmentDetails'
+         },
+         {
+             $project: {
+                 _id: 0,
+                 title: '$_id',
+                 count: 1,
+                 assignment: '$assignmentDetails'
+             }
+         }
+     ]).toArray();
+
+console.log(topAssignments);
+     res.send(topAssignments);
+
+      })
+     
+
 
       // Send a ping to confirm a successful connection
       //   await client.db("admin").command({ ping: 1 });
